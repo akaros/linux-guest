@@ -76,6 +76,24 @@ static struct console early_vga_console = {
 	.index =	-1,
 };
 
+#ifdef CONFIG_EARLY_PRINTK_VMCALL
+static void early_vmcall_write(struct console *con, const char *str, unsigned n)
+{
+	char c;
+
+	while ((c = *str++) != '\0' && n-- > 0) {
+		__asm__  __volatile__("movl %0, %%edi\nvmcall\n" :  : "m"(c));
+	}
+}
+
+static struct console early_vmcall_console = {
+	.name =		"earlyvmcall",
+	.write =	early_vmcall_write,
+	.flags =	CON_PRINTBUFFER,
+	.index =	-1,
+};
+#endif
+
 /* Serial functions loosely based on a similar package from Klaus P. Gerlicher */
 
 static unsigned long early_serial_base = 0x3f8;  /* ttyS0 */
@@ -373,6 +391,11 @@ static int __init setup_early_printk(char *buf)
 #ifdef CONFIG_EARLY_PRINTK_DBGP
 		if (!strncmp(buf, "dbgp", 4) && !early_dbgp_init(buf + 4))
 			early_console_register(&early_dbgp_console, keep);
+#endif
+#ifdef CONFIG_EARLY_PRINTK_VMCALL
+		if (!strncmp(buf, "vmcall", 4)) {
+			early_console_register(&early_vmcall_console, keep);
+		}
 #endif
 #ifdef CONFIG_HVC_XEN
 		if (!strncmp(buf, "xen", 3))

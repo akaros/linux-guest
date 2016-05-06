@@ -42,6 +42,12 @@ config EARLY_PRINTK_DBGP
 	  with klogd/syslogd or the X server. You should normally say N here,
 	  unless you want to debug such a crash. You need usb debug device.
 
+config EARLY_PRINTK_VMCALL
+	bool "Early printk via Akaros VMMCP vmcall support"
+	depends on EARLY_PRINTK
+	---help---
+	  Write kernel log via vmcalls.
+
 config EARLY_PRINTK_EFI
 	bool "Early printk via the EFI framebuffer"
 	depends on EFI && EARLY_PRINTK
