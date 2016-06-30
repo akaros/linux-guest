@@ -100,6 +100,17 @@ int __init clocksource_i8253_init(void)
 #endif
 
 #ifdef CONFIG_CLKEVT_I8253
+
+static int pit_enabled = 1;
+static int __init parse_pit(char *str)
+{
+	if (!strcmp(str, "none")) {
+		pit_enabled = 0;
+	}
+	return 0;
+}
+early_param("pit", parse_pit);
+
 static int pit_shutdown(struct clock_event_device *evt)
 {
 	if (!clockevent_state_oneshot(evt) && !clockevent_state_periodic(evt))
@@ -169,6 +180,8 @@ struct clock_event_device i8253_clockevent = {
  */
 void __init clockevent_i8253_init(bool oneshot)
 {
+	if (!pit_enabled)
+		return;
 	if (oneshot) {
 		i8253_clockevent.features |= CLOCK_EVT_FEAT_ONESHOT;
 		i8253_clockevent.set_state_oneshot = pit_set_oneshot;
