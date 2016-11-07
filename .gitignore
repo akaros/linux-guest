@@ -115,3 +115,7 @@ all.config
 
 # Kdevelop4
 *.kdev4
+
+# Akaros VMM environment
+newroot.cpio
+vmlinux.asm
