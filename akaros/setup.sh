@@ -16,7 +16,7 @@
 # - consider extracting the packages, instead of loading them every run time.
 # Needs unsquashfs on the host, extract to tc_root, for example.
 
-SSHD_PORT=23
+SSHD_PORT=22
 
 echo "Downloading TC distro"
 wget -q -nc http://tinycorelinux.net/7.x/x86_64/release/distribution_files/corepure64.gz
@@ -47,7 +47,7 @@ cd tczs
 
 # You can add any other packages you want by default here.  You'll also need to
 # add the deps below manually.
-PACKAGES='openssl openssh strace apache2.4 libdmapsharing udev-lib liblvm2 parted parted-dev libpcap libusb libnl tcpdump' 
+PACKAGES='openssl openssh strace apache2.4 libdmapsharing udev-lib liblvm2 parted parted-dev libpcap libusb libnl tcpdump bind-utilities libxml2'
 
 for i in $PACKAGES
 do
@@ -62,6 +62,10 @@ echo "libpcap.tcz" >> tcpdump.tcz.dep
 echo "libusb.tcz" >> tcpdump.tcz.dep
 echo "libnl.tcz" >> tcpdump.tcz.dep
 echo "udev-lib.tcz" >> tcpdump.tcz.dep
+
+echo "openssl.tcz" >> bind-utilities.tcz.dep
+echo "libxml2.tcz" >> bind-utilities.tcz.dep
+
 cd ..
 
 sudo mkdir -p tc_root/etc/sysconfig/tcedir/optional
