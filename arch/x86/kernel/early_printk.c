@@ -82,7 +82,7 @@ static void early_vmcall_write(struct console *con, const char *str, unsigned n)
 	char c;
 
 	while ((c = *str++) != '\0' && n-- > 0) {
-		__asm__  __volatile__("movl %0, %%edi\nvmcall\n" :  : "m"(c));
+		__asm__  __volatile__("movq $1, %%rax\nmovq %0, %%rdi\nvmcall\n" :  : "m"(c) : "rax", "rdi");
 	}
 }
 
