@@ -77,6 +77,7 @@
 #include <asm/i8259.h>
 #include <asm/realmode.h>
 #include <asm/misc.h>
+#include <asm/akaros_para.h>
 
 /* Number of siblings per CPU package */
 int smp_num_siblings = 1;
@@ -130,11 +131,11 @@ static inline void smpboot_setup_warm_reset_vector(unsigned long start_eip)
 	spin_unlock_irqrestore(&rtc_lock, flags);
 	local_flush_tlb();
 	pr_debug("1.\n");
-	//*((volatile unsigned short *)phys_to_virt(TRAMPOLINE_PHYS_HIGH)) =
-	//						start_eip >> 4;
+	*((volatile unsigned short *)phys_to_virt(TRAMPOLINE_PHYS_HIGH)) =
+							start_eip >> 4;
 	pr_debug("2.\n");
-	//*((volatile unsigned short *)phys_to_virt(TRAMPOLINE_PHYS_LOW)) =
-	//						start_eip & 0xf;
+	*((volatile unsigned short *)phys_to_virt(TRAMPOLINE_PHYS_LOW)) =
+							start_eip & 0xf;
 	pr_debug("3.\n");
 }
 
@@ -1006,7 +1007,8 @@ static int do_boot_cpu(int apicid, int cpu, struct task_struct *idle,
 
 		pr_debug("Setting warm reset code and vector.\n");
 
-		smpboot_setup_warm_reset_vector(start_ip);
+		if (!akaros_para_top())
+			smpboot_setup_warm_reset_vector(start_ip);
 		/*
 		 * Be paranoid about clearing APIC errors.
 		*/
@@ -1037,9 +1039,10 @@ static int do_boot_cpu(int apicid, int cpu, struct task_struct *idle,
 		boot_error = wakeup_cpu_via_init_nmi(cpu, start_ip, apicid,
 						     cpu0_nmi_registered);
 
-	/* AKAROS VMCALL SMP */
-	__asm__ __volatile__("movq $2, %%rax\nmovq $secondary_startup_64, %%rdi\nmovq %0, %%rsi\nvmcall\n" : : "m"(initial_stack) : "rax", "rdi", "rsi");
-
+	if (akaros_para_top()) {
+		/* AKAROS VMCALL SMP */
+		__asm__ __volatile__("movq $2, %%rax\nmovq $secondary_startup_64, %%rdi\nmovq %0, %%rsi\nvmcall\n" : : "m"(initial_stack) : "rax", "rdi", "rsi");
+	}
 
 	if (!boot_error) {
 		/*
@@ -1082,7 +1085,8 @@ static int do_boot_cpu(int apicid, int cpu, struct task_struct *idle,
 		/*
 		 * Cleanup possible dangling ends...
 		 */
-		smpboot_restore_warm_reset_vector();
+		if (!akaros_para_top())
+			smpboot_restore_warm_reset_vector();
 	}
 
 	return boot_error;

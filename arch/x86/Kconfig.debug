@@ -44,7 +44,7 @@ config EARLY_PRINTK_DBGP
 
 config EARLY_PRINTK_VMCALL
 	bool "Early printk via Akaros VMMCP vmcall support"
-	depends on EARLY_PRINTK
+	depends on EARLY_PRINTK && AKAROS_GUEST
 	---help---
 	  Write kernel log via vmcalls.
 

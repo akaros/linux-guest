@@ -21,6 +21,7 @@
 #include <linux/efi.h>
 #include <asm/efi.h>
 #include <asm/pci_x86.h>
+#include <asm/akaros_para.h>
 
 /* Simple VGA output */
 #define VGABASE		(__ISA_IO_base + 0xb8000)
@@ -81,6 +82,8 @@ static void early_vmcall_write(struct console *con, const char *str, unsigned n)
 {
 	char c;
 
+	if (!akaros_para_top())
+		return;
 	while ((c = *str++) != '\0' && n-- > 0) {
 		__asm__  __volatile__("movq $1, %%rax\nmovq %0, %%rdi\nvmcall\n" :  : "m"(c) : "rax", "rdi");
 	}

@@ -780,6 +780,14 @@ config KVM_DEBUG_FS
 
 source "arch/x86/lguest/Kconfig"
 
+config AKAROS_GUEST
+	bool "AKAROS Guest support"
+	depends on PARAVIRT && KVM_GUEST
+	default y
+	---help---
+	  This option enables various optimizations for running under the Akaros
+	  hypervisor. It requires KVM_GUEST right now.
+
 config PARAVIRT_TIME_ACCOUNTING
 	bool "Paravirtual steal time accounting"
 	depends on PARAVIRT
