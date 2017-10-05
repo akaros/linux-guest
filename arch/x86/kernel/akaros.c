@@ -57,9 +57,19 @@ bool akaros_para_top(void)
 }
 EXPORT_SYMBOL_GPL(akaros_para_top);
 
-static void __init akaros_set_para_top(void)
+static unsigned long akaros_get_tsc_khz(void)
+{
+	/* TODO: Aquired via commandline.  Can replace with a VMCALL, and maybe
+	 * remove the lapic_timer_frequency hack too. */
+	return tsc_khz;
+}
+
+static void __init akaros_init_platform(void)
 {
 	akaros_top = true;
+
+	x86_platform.calibrate_tsc = akaros_get_tsc_khz;
+	x86_platform.calibrate_cpu = akaros_get_tsc_khz;
 }
 
 static uint32_t __init akaros_detect(void)
@@ -72,6 +82,6 @@ const struct hypervisor_x86 x86_hyper_akaros __refconst = {
 	.name			= "AKAROS",
 	.detect			= akaros_detect,
 	.x2apic_available	= akaros_para_available,
-	.init_platform	= akaros_set_para_top,
+	.init_platform	= akaros_init_platform,
 };
 EXPORT_SYMBOL_GPL(x86_hyper_akaros);
