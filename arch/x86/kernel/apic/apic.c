@@ -786,14 +786,6 @@ calibrate_by_pmtimer(long deltapm, long *delta, long *deltatsc)
 	return 0;
 }
 
-static int __init lapictimerfreq(char *str)
-{
-	get_option(&str, &lapic_timer_frequency);
-	return 0;
-}
-
-early_param("lapictimerfreq", lapictimerfreq);
-
 static int __init calibrate_APIC_clock(void)
 {
 	struct clock_event_device *levt = this_cpu_ptr(&lapic_events);

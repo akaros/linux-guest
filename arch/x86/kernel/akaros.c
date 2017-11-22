@@ -94,6 +94,9 @@ static void __init akaros_init_platform(void)
 	x86_platform.calibrate_tsc = akaros_get_tsc_khz;
 	x86_platform.calibrate_cpu = akaros_get_tsc_khz;
 
+	/* Akaros's LAPIC timer emulation is hardcoded for a 1 MHz timer. */
+	lapic_timer_frequency = 1000000 / HZ;
+
 	pv_irq_ops.safe_halt = akaros_safe_halt;
 	pv_irq_ops.halt = akaros_halt;
 }
