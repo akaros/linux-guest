@@ -61,8 +61,10 @@ EXPORT_SYMBOL_GPL(akaros_para_top);
 
 static unsigned long akaros_get_tsc_khz(void)
 {
-	/* TODO: Aquired via commandline.  Can replace with a VMCALL, and maybe
-	 * remove the lapic_timer_frequency hack too. */
+	unsigned long tsc_khz;
+
+	asm volatile ("movq $3, %%rax; vmcall" : "=a"(tsc_khz));
+
 	return tsc_khz;
 }
 

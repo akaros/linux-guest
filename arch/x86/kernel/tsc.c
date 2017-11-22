@@ -1263,14 +1263,6 @@ static int __init init_tsc_clocksource(void)
  */
 device_initcall(init_tsc_clocksource);
 
-static int __init tsc_frequency(char *str)
-{
-	get_option(&str, &tsc_khz);
-	return 0;
-}
-
-early_param("tscfreq", tsc_frequency);
-
 void __init tsc_init(void)
 {
 	u64 lpj, cyc;
@@ -1281,10 +1273,9 @@ void __init tsc_init(void)
 		return;
 	}
 
-	if (!tsc_khz){
-		cpu_khz = x86_platform.calibrate_cpu();
-		tsc_khz = x86_platform.calibrate_tsc();
-	}
+	cpu_khz = x86_platform.calibrate_cpu();
+	tsc_khz = x86_platform.calibrate_tsc();
+
 	/*
 	 * Trust non-zero tsc_khz as authorative,
 	 * and use it to sanity check cpu_khz,
