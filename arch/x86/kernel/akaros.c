@@ -24,6 +24,17 @@
 #include <asm/hypervisor.h>
 #include <asm/mwait.h>
 
+/* For debugging, in lieu of a common header, copy this around.  The VMM will
+ * trace_printf the current trapframe, viewable with dmesg. */
+static __always_inline void vmcall_trace_tf(void)
+{
+	asm volatile ("movq %%rax, %%r11;"
+		      "movq $4, %%rax;"
+		      "vmcall;"
+		      "movq %%r11, %%rax"
+		      : : : "r11");
+}
+
 static int akaros_cpuid_base = -1;
 
 static void init_akaros_cpuid_base(void)
