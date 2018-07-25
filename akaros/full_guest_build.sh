@@ -7,7 +7,7 @@
 
 usage()
 {
-	echo "$0 PATH_TO_LINUX_ROOT"
+	echo "$0 NOT_RELATIVE_PATH_TO_LINUX_ROOT"
 	exit -1
 }
 
@@ -16,6 +16,11 @@ then
 	usage
 fi
 LINUX_ROOT=$1
+
+if [[ ${LINUX_ROOT:0:1} == "." ]]
+then
+	usage
+fi
 
 ./setup.sh
 
@@ -32,6 +37,12 @@ Host host
     IdentityFile ~/.ssh/db_rsa
 	StrictHostKeyChecking no
 EOF
+
+# TC's taskset is buggy and lousy.  Usually this one is all you need.
+sudo cp `which taskset` tc_root/usr/local/bin/
+# customized for brho's system, static linux perf
+sudo cp ~/src/linux/tools/perf/perf tc_root/usr/local/bin/
+sudo chmod o+rx tc_root/usr/local/bin/perf
 
 ./rebuild_cpio_and_linux.sh $LINUX_ROOT
 

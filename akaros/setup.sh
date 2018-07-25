@@ -26,6 +26,7 @@ sudo rm -rf tc_root
 mkdir tc_root
 chmod 777 tc_root
 (cd tc_root && zcat ../corepure64.gz | sudo cpio -H newc -i)
+(cd tc_root && sudo ln -s lib lib64)
 
 ######## KERNEL SETUP
 

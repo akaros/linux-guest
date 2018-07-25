@@ -12,7 +12,7 @@ INITRD_NAME=newroot.cpio
 
 usage()
 {
-	echo "$0 PATH_TO_LINUX_ROOT"
+	echo "$0 NOT_RELATIVE_PATH_TO_LINUX_ROOT"
 	exit -1
 }
 
@@ -21,6 +21,11 @@ then
 	usage
 fi
 LINUX_ROOT=$1
+
+if [[ ${LINUX_ROOT:0:1} == "." ]]
+then
+	usage
+fi
 
 if [ ! -d "tc_root" ]
 then
@@ -34,6 +39,7 @@ sudo chown -R 1001 tc_root/home/tc
 
 echo "Building Linux modules"
 sudo rm -r tc_root/lib/modules/*
+rm -r kernel_mods/
 mkdir -p kernel_mods
 KERNEL_MODS=`pwd`/kernel_mods
 (cd $LINUX_ROOT &&
