@@ -838,6 +838,22 @@ config PVH
 	  This option enables the PVH entry point for guest virtual machines
 	  as specified in the x86/HVM direct boot ABI.
 
+config AKAROS_GUEST
+	bool "Akaros Guest support"
+	depends on PARAVIRT && KVM_GUEST
+	select PARAVIRT_XXL
+	default y
+	help
+	  This option enables running as a paravirtualized virtual machine on
+	  the Akaros operating system.
+
+config AKAROS_TESTS
+	tristate "Akaros Tests"
+	depends on AKAROS_GUEST
+	help
+	  This option builds a module for running various tests when run as a
+	  virtual machine on Akaros.
+
 config PARAVIRT_TIME_ACCOUNTING
 	bool "Paravirtual steal time accounting"
 	depends on PARAVIRT

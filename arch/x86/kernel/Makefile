@@ -131,6 +131,9 @@ obj-$(CONFIG_X86_PMEM_LEGACY_DEVICE) += pmem.o
 
 obj-$(CONFIG_JAILHOUSE_GUEST)	+= jailhouse.o
 
+obj-$(CONFIG_AKAROS_GUEST)	+= akaros.o
+obj-$(CONFIG_AKAROS_TESTS)	+= akaros_tests.o
+
 obj-$(CONFIG_EISA)		+= eisa.o
 obj-$(CONFIG_PCSPKR_PLATFORM)	+= pcspeaker.o
 
