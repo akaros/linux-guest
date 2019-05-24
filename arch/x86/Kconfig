@@ -816,6 +816,22 @@ config KVM_DEBUG_FS
 	  Statistics are displayed in debugfs filesystem. Enabling this option
 	  may incur significant overhead.
 
+config AKAROS_GUEST
+	bool "Akaros Guest support"
+	depends on PARAVIRT && KVM_GUEST
+	select PARAVIRT_XXL
+	default y
+	---help---
+	  This option enables running as a paravirtualized virtual machine on
+	  the Akaros operating system.
+
+config AKAROS_TESTS
+	tristate "Akaros Tests"
+	depends on AKAROS_GUEST
+	---help---
+	  This option builds a module for running various tests when run as a
+	  virtual machine on Akaros.
+
 config PARAVIRT_TIME_ACCOUNTING
 	bool "Paravirtual steal time accounting"
 	depends on PARAVIRT
