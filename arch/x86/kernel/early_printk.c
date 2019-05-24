@@ -22,6 +22,7 @@
 #include <linux/efi.h>
 #include <asm/efi.h>
 #include <asm/pci_x86.h>
+#include <asm/akaros.h>
 
 /* Simple VGA output */
 #define VGABASE		(__ISA_IO_base + 0xb8000)
@@ -383,6 +384,11 @@ static int __init setup_early_printk(char *buf)
 #ifdef CONFIG_EARLY_PRINTK_DBGP
 		if (!strncmp(buf, "dbgp", 4) && !early_dbgp_init(buf + 4))
 			early_console_register(&early_dbgp_console, keep);
+#endif
+#ifdef CONFIG_AKAROS_GUEST
+		if (!strncmp(buf, "akaros", 6)) {
+			early_console_register(&akaros_boot_console, keep);
+		}
 #endif
 #ifdef CONFIG_HVC_XEN
 		if (!strncmp(buf, "xen", 3))
