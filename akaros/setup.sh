@@ -4,8 +4,8 @@
 # packages and their deps.  Blows away your old tc_core and cpio.
 #
 # Once you set up tc_root, you can manually edit files, add packages, or
-# whatever, then rebuild_cpio_and_linux.sh.  To add a new TCZ package, it's
-# probably easiest to just edit PACKAGES, add any deps, and rerun this script.
+# whatever, then rebuild_cpio_and_linux.sh.  To add a new TCZ package, just edit
+# PACKAGES and rerun this script.
 # When mucking with tc_root, you'll usually need sudo.  Sorry.
 #
 # You probably want to set up ssh keys for the TC user, both so you can ssh
@@ -13,11 +13,17 @@
 # are the same as Akaros's default dropbear server.
 
 set -e
+trap "exit" INT
 
 SSHD_PORT=22
+VERBOSE=1
+#Other fun ones: strace tcpdump
+PACKAGES='openssh'
+
+TC_URL=http://tinycorelinux.net/7.x/x86_64/
 
 echo "Downloading TC distro"
-wget -q -nc http://tinycorelinux.net/7.x/x86_64/release/distribution_files/corepure64.gz
+wget -q -nc $TC_URL/release/distribution_files/corepure64.gz
 
 echo "Extracting TC distro"
 sudo rm -rf tc_root
@@ -81,24 +87,68 @@ echo "Downloading packages"
 mkdir -p tczs
 cd tczs
 
-# You can add any other packages you want by default here.  Make sure you add
-# any dependencies too
-PACKAGES='openssl openssh strace apache2.4 libdmapsharing udev-lib liblvm2 parted parted-dev libpcap libusb libnl tcpdump bind-utilities libxml2'
-
+declare -A TCZS
 for i in $PACKAGES; do
-	wget -q -nc http://tinycorelinux.net/7.x/x86_64/tcz/$i.tcz
+	TCZS["$i.tcz"]="undepped"
+done
+
+REDEP=1
+while [ $REDEP -eq 1 ]; do
+	REDEP=0
+
+	for i in "${!TCZS[@]}"; do
+		if [[ ${TCZS[$i]} == "depped" ]]; then
+			continue
+		fi
+
+		if [[ ! -f $i.dep ]]; then
+			curl -sS $TC_URL/tcz/$i.dep > $i.dep
+			# Not Found is split over lines...
+			if cat $i.dep | xargs | grep -q "Not Found"; then
+				echo "" > $i.dep
+			fi
+		fi
+		DEPS=`cat $i.dep`
+		TCZS[$i]="depped"
+
+		for j in $DEPS; do
+			[[ $VERBOSE ]] && echo Dep: $i pulls in $j
+			# We're likely building our own kernel and don't want
+			# their modules
+			if [[ $j =~ KERNEL ]]; then
+				[[ $VERBOSE ]] && echo "Skipping $j (KERNEL modules)"
+				continue;
+			fi
+			if [[ ${TCZS[$j]} == "depped" ]]; then
+				continue;
+			fi
+			TCZS[$j]="undepped"
+			REDEP=1
+		done
+	done
+done
+
+for i in "${!TCZS[@]}"; do
+	if [[ ${TCZS[$i]} != "depped" ]]; then
+		echo "Warning: $i has unmet dependencies! (Our bug)"
+	fi
+	wget -q -nc $TC_URL/tcz/$i ||
+		echo "Failed to download $i; you might have runtime issues"
 done
 cd ..
 
-echo "Extracting packages"
+echo "Extracting TCZs"
 
-for i in $PACKAGES; do
-	sudo unsquashfs -f -d tc_root/ tczs/$i.tcz >/dev/null
+for i in "${!TCZS[@]}"; do
+	sudo unsquashfs -f -d tc_root/ tczs/$i >/dev/null
 done
 
 (cd tc_root && sudo ldconfig -r . )
 
 ######## SSH
+
+# mildly hokey - not indenting.
+if [[ $PACKAGES =~ openssh ]]; then
 
 echo "Setting up SSH"
 
@@ -198,3 +248,5 @@ sudo chmod 600 tc_root/usr/local/etc/ssh/ssh_host_ecdsa_key.pub
 sudo bash<<EOF
 echo '/usr/local/etc/init.d/openssh start' >> tc_root/opt/bootlocal.sh
 EOF
+
+fi #openssh

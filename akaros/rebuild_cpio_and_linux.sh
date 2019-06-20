@@ -7,6 +7,7 @@
 # or if you have new kernel modules you'd like to install.
 
 set -e
+trap "exit" INT
 
 MAKE_JOBS="${MAKE_JOBS:-8}"
 # keep this in sync with the published linux .config.  Must end in .cpio.

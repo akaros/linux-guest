@@ -6,6 +6,14 @@
 # You'll want to customize this for your environment.
 
 set -e
+trap "exit" INT
+
+# Set this to paths to binaries on your system, however you'd like.
+## This is relatively large (15 MB)
+#CUSTOM_BINARIES+="$HOME/src/linux/tools/perf/perf"
+# TC's taskset is mediocre
+CUSTOM_BINARIES+=" "
+CUSTOM_BINARIES+=`which taskset`
 
 usage()
 {
@@ -48,11 +56,10 @@ Host host
 EOF
 sudo cp tc_root/home/tc/.ssh/config tc_root/root/.ssh/
 
-# TC's taskset is buggy and lousy.  Usually this one is all you need.
-sudo cp `which taskset` tc_root/usr/local/bin/
-# customized for brho's system, static linux perf
-sudo cp ~/src/linux/tools/perf/perf tc_root/usr/local/bin/
-sudo chmod o+rx tc_root/usr/local/bin/perf
+for i in $CUSTOM_BINARIES; do
+	sudo cp $i tc_root/usr/local/bin/
+done
+sudo chmod o+rx tc_root/usr/local/bin/*
 
 ./rebuild_cpio_and_linux.sh $LINUX_ROOT
 
