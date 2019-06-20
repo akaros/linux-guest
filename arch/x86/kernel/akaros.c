@@ -14,6 +14,7 @@
 #include <asm/mwait.h>
 #include <asm/i8259.h>
 #include <asm/timer.h>
+#include <asm/reboot.h>
 #include <asm/akaros.h>
 
 /* For debugging, in lieu of a common header, copy this around.  The VMM will
@@ -125,6 +126,11 @@ static void akaros_apic_post_init(void)
 	apic->wakeup_secondary_cpu = akaros_wake_smp;
 }
 
+static void akaros_shutdown(void)
+{
+	asm volatile ("vmcall;" : : "a"(AKAROS_VMCALL_SHUTDOWN));
+}
+
 /*
  * Notes:
  * - We're still using legacy_pic.  virtio is doubling-up on those IRQs.  That
@@ -151,6 +157,10 @@ static void __init akaros_init_platform(void)
 	pv_ops.irq.halt = akaros_halt;
 
 	pv_info.name = "Akaros";
+
+	machine_ops.power_off = akaros_shutdown;
+	machine_ops.shutdown = akaros_shutdown;
+	machine_ops.halt = akaros_shutdown;
 
 #ifdef CONFIG_X86_IO_APIC
 	no_timer_check = 1;

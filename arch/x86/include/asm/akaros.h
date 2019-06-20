@@ -7,6 +7,7 @@
 #define AKAROS_VMCALL_SMPBOOT          0x2
 #define AKAROS_VMCALL_GET_TSCFREQ      0x3
 #define AKAROS_VMCALL_TRACE_TF         0x4
+#define AKAROS_VMCALL_SHUTDOWN         0x5
 
 extern struct console akaros_boot_console;
 
