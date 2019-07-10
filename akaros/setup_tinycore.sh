@@ -1,7 +1,8 @@
 #!/bin/bash
-# 
+# Barret Rhoden (brho@google.com)
+#
 # Downloads corepure, extracts it to initramfs, and downloads a few extra
-# packages and their deps.  Blows away your old tc_core and cpio.
+# packages and their deps.  Blows away your old tc_core/.
 #
 # Once you set up tc_root, you can manually edit files, add packages, or
 # whatever, then rebuild_cpio_and_linux.sh.  To add a new TCZ package, just edit
@@ -17,10 +18,17 @@ trap "exit" INT
 
 SSHD_PORT=22
 VERBOSE=1
-#Other fun ones: strace tcpdump
+#Other fun packages: strace tcpdump
 PACKAGES='openssh'
 
 TC_URL=http://tinycorelinux.net/7.x/x86_64/
+
+DIR=`dirname "$0"`
+if [[ "$DIR" != "." ]]
+then
+	echo "Run the script $0 from within its directory: $DIR"
+	exit -1
+fi
 
 echo "Downloading TC distro"
 wget -q -nc $TC_URL/release/distribution_files/corepure64.gz
@@ -32,9 +40,12 @@ chmod 777 tc_root
 (cd tc_root && zcat ../corepure64.gz | sudo cpio -H newc -i)
 (cd tc_root && sudo ln -s lib lib64)
 
-######## KERNEL SETUP
+######## BASIC DISTRO SETUP
 
-# We were shingledeckered
+# Homedir for 'tc', in case we're using that account.  Will get chowned later.
+sudo mkdir -p tc_root/home/tc
+
+# Even if we don't override rcS, I can't stand the screen clear
 sudo sed -i '/^clear$/d' tc_root/etc/init.d/rcS
 
 # Our auto-login will be root.  Tinycore has a 'tc' user, but this initrd is
@@ -79,7 +90,11 @@ EOF
 sudo chmod +x tc_root/opt/bootlocal.sh
 
 # Machine/site-specific setup
-[[ -f tc-sys.sh ]] && sudo cp tc-sys.sh tc_root/root/
+[ -e tc-sys.sh-link ] && sudo cp tc-sys.sh-link tc_root/root/tc-sys.sh
+
+# Total override of tinycore's init scripts.  All the tty1, bootlocal, and other
+# stuff won't necessarily run, unless your rcS script calls it.
+[ -e rcS-link ] && sudo cp rcS-link tc_root/etc/init.d/rcS
 
 ######## PACKAGES
 
@@ -156,7 +171,7 @@ sudo mkdir -p tc_root/usr/local/etc/ssh
 sudo mkdir -p tc_root/var/lib/sshd
 
 # creates our sshd_config
-sudo dd of=tc_root/usr/local/etc/ssh/sshd_config status=none << EOF
+sudo dd of=tc_root/usr/local/etc/ssh/sshd_config status=none <<-EOF
 # This is ssh server systemwide configuration file.
 Port $SSHD_PORT
 HostKey /usr/local/etc/ssh/ssh_host_rsa_key
@@ -183,7 +198,7 @@ EOF
 # whatever.  Note that these keys (and this file) are not secret in any way.
 
 # Server rsa key:
-sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_rsa_key status=none << EOF
+sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_rsa_key status=none <<-EOF
 -----BEGIN RSA PRIVATE KEY-----
 MIICZQIBAAKBgwCAPaxDQDoR05AF7uaM7FvOMFJoC56HX/7T4bSpjRieqsHXD3r5
 wk6xpIlohmlmlz8QSCFl2VamyKFL8JpYnekha6M7+7MiK8bzPb7lqmd+dZCk2/4n
@@ -203,13 +218,13 @@ EOF
 sudo chmod 600 tc_root/usr/local/etc/ssh/ssh_host_rsa_key
 
 # Server rsa pubkey:
-sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_rsa_key.pub status=none << EOF
+sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_rsa_key.pub status=none <<-EOF
 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgwCAPaxDQDoR05AF7uaM7FvOMFJoC56HX/7T4bSpjRieqsHXD3r5wk6xpIlohmlmlz8QSCFl2VamyKFL8JpYnekha6M7+7MiK8bzPb7lqmd+dZCk2/4nJYNnxjFHv8RRWcX6xvrpqZsVpKzMN+nN6Q26ln31TSfiYAIMqaQFiHNpMY0/ root@
 EOF
 sudo chmod 600 tc_root/usr/local/etc/ssh/ssh_host_rsa_key.pub
 
 # DSA
-sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_dsa_key status=none << EOF
+sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_dsa_key status=none <<-EOF
 -----BEGIN DSA PRIVATE KEY-----
 MIIBugIBAAKBgQCa7L4DlYGKYzD5w17MoQq5YuSvN+XZuMWpzj9R95jOpRncjrOB
 dApOpuyPX6GQHa6KxTWIG5ReuyBFrgMQMIuB5nzHRViwYopc20JQ3FA7zWD6voPH
@@ -225,13 +240,13 @@ z6i5CHQHoyd+wX2Ie5hFpWG6JhMgqFbzhnFyL5XKepXsHD0avsH+M/GiHwsSuZbg
 EOF
 sudo chmod 600 tc_root/usr/local/etc/ssh/ssh_host_dsa_key
 
-sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_dsa_key.pub status=none << EOF
+sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_dsa_key.pub status=none <<-EOF
 ssh-dss AAAAB3NzaC1kc3MAAACBAJrsvgOVgYpjMPnDXsyhCrli5K835dm4xanOP1H3mM6lGdyOs4F0Ck6m7I9foZAdrorFNYgblF67IEWuAxAwi4HmfMdFWLBiilzbQlDcUDvNYPq+g8e9OgoQXZnePXh2l8KcDmSrlTgf3OP0MaPI2niF20aqux6mnT9RDd22g/7NAAAAFQDiufLG/ZQ5dWSfURjBVCuPeXnKpwAAAIANp+jYAl9+CN8G+JxgxYjwjhgcetvetsdZrnTVhTAILZgTD3joHFjRYFF8Ta411qMyFeamGAMNyK+zDettVQWrUInsczC/BdBWBj4C5Qg1gyiprm+p5ghtjPBl4JI0wL2W8OkDlrYD9X+efS6t9/kD88Bdyy3TV3YkPgMg0z+9hAAAAIAAt7bx8oIvxBGpBSLEITeudnGy9J8jYbnUQi0WbnReSATJes12jkqHz6i5CHQHoyd+wX2Ie5hFpWG6JhMgqFbzhnFyL5XKepXsHD0avsH+M/GiHwsSuZbg+s578C0fvxqJegr+uOAO9hzrtV58wjTmp3I3c+8yYKhNRcDd5z+FVQ== root@
 EOF
 sudo chmod 600 tc_root/usr/local/etc/ssh/ssh_host_dsa_key.pub
 
 # ECDSA
-sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_ecdsa_key status=none << EOF
+sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_ecdsa_key status=none <<-EOF
 -----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIDJSnV6xzf5PfKDa7agVfX33seyRAmgQMp9tQ8u2UztqoAoGCCqGSM49
 AwEHoUQDQgAEgxWZ0GPel/CwLm5iMeYbokckWnE8uW2Hgo8skQNhpstwe6lYQMVy
@@ -240,12 +255,12 @@ dSsejPUpkdJZdaWgRISNtH/jHGjQUYbxxg==
 EOF
 sudo chmod 600 tc_root/usr/local/etc/ssh/ssh_host_ecdsa_key
 
-sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_ecdsa_key.pub status=none << EOF
+sudo dd of=tc_root/usr/local/etc/ssh/ssh_host_ecdsa_key.pub status=none <<-EOF
 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIMVmdBj3pfwsC5uYjHmG6JHJFpxPLlth4KPLJEDYabLcHupWEDFcnUrHoz1KZHSWXWloESEjbR/4xxo0FGG8cY= root@
 EOF
 sudo chmod 600 tc_root/usr/local/etc/ssh/ssh_host_ecdsa_key.pub
 
-sudo bash<<EOF
+sudo bash <<-EOF
 echo '/usr/local/etc/init.d/openssh start' >> tc_root/opt/bootlocal.sh
 EOF
 

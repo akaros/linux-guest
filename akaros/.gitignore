@@ -1,6 +1,5 @@
 kernel_mods
 tc_root
 tczs
-tc-sys.sh
 corepure64.gz
-newroot.cpio
+obj/
