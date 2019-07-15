@@ -76,7 +76,7 @@ fi
 for i in $CUSTOM_BINARIES; do
 	sudo cp $i tc_root/usr/local/bin/
 done
-sudo chmod o+rx tc_root/usr/local/bin/*
+sudo chmod -R o+rx tc_root/usr/local/bin/
 
 for i in $CUSTOM_REMOVALS; do
 	sudo rm tc_root/$i
