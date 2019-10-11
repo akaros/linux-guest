@@ -113,3 +113,8 @@ sudo cp tc_root/home/tc/.ssh/config tc_root/root/.ssh/
 echo "Copying to devbox"
 [ ! -n "$SKIP_KERNEL" ] && scp $LINUX_ROOT/vmlinux devbox:
 scp $LINUX_ROOT/akaros/initramfs.cpio.gz devbox:
+
+# Example for building and deploying mount-fs:
+#./embed_payload.sh vm-apps/mount-fs.sh initramfs.cpio.gz obj/mount-fs
+#
+#scp obj/mount-fs devbox:bin/
