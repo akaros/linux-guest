@@ -20,9 +20,6 @@
 set -e
 trap "exit" INT
 
-# Build any of our tiny programs
-(cd progs && make)
-
 # Set this to paths to binaries on your system, however you'd like.  They will
 # show up in /usr/local/bin/
 #
@@ -70,6 +67,9 @@ then
 	echo "Run the script $0 from within its directory: $DIR"
 	usage
 fi
+
+# Build any of our tiny programs
+(cd progs && make)
 
 ./setup_tinycore.sh
 
