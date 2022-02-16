@@ -68,6 +68,9 @@ then
 	usage
 fi
 
+# Kernel config
+cp kernel.config $LINUX_ROOT/.config
+
 # Build any of our tiny programs
 (cd progs && make)
 

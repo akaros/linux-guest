@@ -49,7 +49,7 @@ fi
 
 if [ ! -d "tc_root" ]
 then
-	echo "tc_root not found, run setup.sh first"
+	echo "tc_root not found, run setup_tinycore.sh first"
 	exit -1
 fi
 

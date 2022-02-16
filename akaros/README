@@ -1,0 +1,91 @@
+brho@google.com
+2022-02-15
+
+This directory contains a bunch of scripts and working directories to build a
+Linux guest kernel and a tinycore (TC) image as an initrd.
+
+The scripts expect to be run from this directory and require sudo for mucking
+with the initrd.  Sorry.
+
+Typical usage: run full_guest_build.sh $FULL_PATH once, then as you muck with
+things, run rebuild_cpio_and_linux.sh $FULL_PATH.  If you aren't changing the
+kernel, run SKIP_KERNEL=1 ./rebuild_cpio_and_linux.sh.
+
+
+Scripts:
+--------------------
+- full_guest_build.sh: produces vmlinux and initrd from scratch.  Calls the
+  other scripts.
+
+  Run with: ./full_guest_build.sh $FULL_PATH_TO_LINUX_REPO
+  - copies kernel.config to $FULL_PATH_TO_LINUX_REPO/.config
+  - setup_tinycore.sh (creates tc_root/)
+  - copies stuff into tc_root/
+  - rebuild_cpio_and_linux.sh
+
+  Customizations:
+  - CUSTOM_BINARIES: programs from your machine to add to tc_root/usr/local/bin
+  - CUSTOM_REMOVALS: files to remove from tc_root.  e.g. libstdc++.
+  - ssh keys (commented out, provide your own keys)
+
+
+- rebuild_cpio_and_linux.sh: build linux (vmlinux & bzimage) and the initrd,
+  using the contents of tc_root.  If you manually changed tc_root (edited files,
+  added programs) or changed the kernel (including modules), run this.
+
+  Run with: ./rebuild_cpio_and_linux.sh $FULL_PATH_TO_LINUX_REPO
+  - builds the kernel modules
+  - cpios tc_root; puts it in this directory.
+  - builds the kernel; puts it in the linux repo.
+
+  You can skip the kernel build if you want with SKIP_KERNEL=1.
+
+
+- setup_tinycore.sh: downloads TC, extracts to tc_core, and installs PACKAGES.
+  Edit the PACKAGES variable to add any tinycore packages you want, e.g.
+  openssh.  The script should find and include any dependencies.  If you change
+  any of the Magic Symlink Overrides, e.g. rcS-link, you need to rerun this.
+
+  Run with: ./setup_tinycore.sh
+  - Optionally overrides rcS and tc-sys.sh.
+  - Misc console setup
+  - Downloads and extracts PACKAGES and dependencies to tc_root
+  - SSH server setup, including hokey server private keys
+
+
+Various directories:
+--------------------
+- kernel_mods: storage for kernel mods created during the kernel build.
+- progs: compiled helper programs to run in the guest.
+- tc_root: TC's root filesystem.  Extracted and edited by the scripts
+- tczs: storage for downloaded TC programs, e.g. openssh and openssl
+- vm-apps: Akaros scripts to run an app as a guest VM, e.g. an ext4 9p server.
+
+
+Magic Symlink Overrides:
+--------------------
+You may noticed symlinks such as "rcS-link -> xxx".  If these symlinks point to
+a file, it will override or install the file into the TC image.  These are quick
+ways to change up what your guest will do at boottime without editing tc_root/
+directly.
+
+- rcS-link: replace the low-level /etc/init.d/rcS script.  This short-circuits
+  most of TC's initialization.  The default rcS mounts /proc, /, fstab, and runs
+  tc-config.  tc-config does the bulk of TC's init, such as modprobing, cmdline
+  parsing, udev stuff, etc.  Ultimately, this calls /opt/bootlocal.sh and
+  tc-sys.sh.  For an example of how to override rcS, check out
+  rcS-example-apps-and-info.  Note that "rcS-link -> xxx" is a dead link, so we
+  will not automatically override rcS.
+
+- tc-sys.sh: script run during the guest's boot, called from TC's
+  /opt/bootlocal.sh.  I use this for setting up networking.  If you override
+  rcS, you'll need to call this manually from your own rcS.
+
+
+Misc helpers:
+--------------------
+- cat_cpio_gz.sh: Dumps the contents of an initramfs to easily see what takes up
+  the most space.
+
+- embed_payload.sh: Embeds a payload with a shell script and makes it
+  executable.  Used for Akaros's vm-apps.

@@ -12,13 +12,13 @@
 
 NIC=eth0
 
-read MAC < /sys/class/net/eth0/address
+read MAC < /sys/class/net/$NIC/address
 
 if [[ "$MAC" == "00:01:02:03:04:0b" ]]; then
-	echo "Detected Akaros Guest, setting up static networking" > /dev/kmsg
+	echo "Detected magic paravirt mac address, setting up static networking" > /dev/kmsg
 	killall udhcpc 2> /dev/null
-	ifconfig eth0 up 10.0.2.15 netmask 255.255.255.0 broadcast 10.0.2.25
-	route add default gw 10.0.2.2 eth0
+	ifconfig $NIC up 10.0.2.15 netmask 255.255.255.0 broadcast 10.0.2.25
+	route add default gw 10.0.2.2 $NIC
 	echo "nameserver 8.8.8.8" > /etc/resolv.conf 
 else
 	echo "Unknown host, turning on DHCP" > /dev/kmsg
