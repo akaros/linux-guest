@@ -30,6 +30,9 @@ if [[ "$MAC" == "00:01:02:03:04:0b" ]]; then
 	route add default gw 10.0.2.2 $NIC
 	echo "nameserver 8.8.8.8" > /etc/resolv.conf 
 
+	# For hosts using IPv6 only
+	ifconfig $NIC add fd0:1234:4321::15/64
+
 	# For my own sanity.  Note that tc-sys.sh often runs backgrounded.
 	echo "Static networking complete" > /dev/kmsg
 else

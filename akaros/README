@@ -110,18 +110,23 @@ Example Commands to run the Virtual Machine:
 	With this setup, you can ssh to localhost:23 and it'll port-foward to the guest.
 
 - Tun/Tap:
-	Although not a VM, a bunch of VMMs on Linux want a tun/tap setup.  I use this:
+	A bunch of VMMs on Linux want a tun/tap setup.  I use tun-up.sh, which
+	is mostly this:
 
-	sudo ip link add br-vm type bridge
-	sudo ip addr add 10.0.2.2/24 dev br-vm
-	sudo ip link set up dev br-vm
-	sudo ip tuntap add tap-vm mode tap
-	sudo ip link set up dev tap-vm
-	sudo ip link set tap-vm master br-vm
+	ip link add br-vm type bridge
+	ip addr add 10.0.2.2/24 dev br-vm 2>/dev/null || true
+	ip addr add fd0:1234:4321::2/64 dev br-vm
+	ip link set up dev br-vm
+	ip tuntap add tap-vm mode tap
+	ip link set up dev tap-vm
+	ip link set tap-vm master br-vm
 
 	This creates a virtual network similar to the one that Qemu's usermode
 	networking will make: guest will get 10.0.2.15, host gets 10.0.2.2.
 	Akaros's VMM NAT does the same thing.
+
+	It also adds an IPv6 address, in case your host kernel is IPv6-only.
+	The guest will use fd0:1234:4321::15/64
 
 - Qemu:
 	Note that qemu takes the bzImage, but not vmlinux.  There might be some
@@ -191,9 +196,8 @@ Example Commands to run the Virtual Machine:
 		Port 5555
 		IdentitiesOnly yes
 		IdentityFile ~/.ssh/db_rsa
-	
-	This ought to work for virtio, but if your workstation has an
-	"ssh-unfriendly" policy, you might have issues.
+
+	This ought to work for a tap:
 
 	Host qemu-tap
 		Hostname 10.0.2.15
@@ -201,6 +205,9 @@ Example Commands to run the Virtual Machine:
 		Port 22
 		IdentitiesOnly yes
 		IdentityFile ~/.ssh/db_rsa
+
+	But if your workstation has an "ssh-unfriendly" policy, you might have
+	issues.
 
 	Instead, you can use port forwarding.  Set up a tunnel from your
 	workstation's 5555 to the VM guest's 22 on the tun/tap network of your
@@ -229,3 +236,11 @@ Example Commands to run the Virtual Machine:
 		Port 2345
 		IdentitiesOnly yes
 		IdentityFile ~/.ssh/db_rsa
+
+	If you don't want to mess around with ssh-config, you can do:
+
+	ssh -o IdentitiesOnly=yes -o IdentityFile=db_rsa root@fd0:1234:4321::15
+
+	or even make a bash alias:
+
+	alias ssh-guest-v6="ssh -o IdentitiesOnly=yes -o IdentityFile=db_rsa root@fd0:1234:4321::15"
