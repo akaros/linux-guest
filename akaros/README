@@ -26,7 +26,7 @@ Scripts:
   Customizations:
   - CUSTOM_BINARIES: programs from your machine to add to tc_root/usr/local/bin
   - CUSTOM_REMOVALS: files to remove from tc_root.  e.g. libstdc++.
-  - ssh keys (commented out, provide your own keys)
+  - ssh keys (looks for my key named "db_rsa", provide your own keys)
 
 
 - rebuild_cpio_and_linux.sh: build linux (vmlinux & bzimage) and the initrd,

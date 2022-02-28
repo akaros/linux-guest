@@ -87,18 +87,21 @@ done
 
 ######## SSH
 # Do your own stuff here.  This lets me ssh in and out as either tc or root
-sudo mkdir -p tc_root/home/tc/.ssh/
-sudo cp ~/.ssh/db_rsa.pub tc_root/home/tc/.ssh/authorized_keys
-sudo cp ~/.ssh/db_rsa.pub tc_root/home/tc/.ssh/
-sudo cp ~/.ssh/db_rsa tc_root/home/tc/.ssh/
 
-sudo mkdir -p tc_root/root/.ssh/
-sudo cp ~/.ssh/db_rsa.pub tc_root/root/.ssh/authorized_keys
-sudo cp ~/.ssh/db_rsa.pub tc_root/root/.ssh/
-sudo cp ~/.ssh/db_rsa tc_root/root/.ssh/
+if [ -f ~/.ssh/db_rsa.pub ]; then
+
+	sudo mkdir -p tc_root/home/tc/.ssh/
+	sudo cp ~/.ssh/db_rsa.pub tc_root/home/tc/.ssh/authorized_keys
+	sudo cp ~/.ssh/db_rsa.pub tc_root/home/tc/.ssh/
+	sudo cp ~/.ssh/db_rsa tc_root/home/tc/.ssh/
+
+	sudo mkdir -p tc_root/root/.ssh/
+	sudo cp ~/.ssh/db_rsa.pub tc_root/root/.ssh/authorized_keys
+	sudo cp ~/.ssh/db_rsa.pub tc_root/root/.ssh/
+	sudo cp ~/.ssh/db_rsa tc_root/root/.ssh/
 
 # This implies the VM is using qemu mode addressing
-sudo dd of=tc_root/home/tc/.ssh/config status=none << EOF
+	sudo dd of=tc_root/home/tc/.ssh/config status=none << EOF
 Host host
 	Hostname 10.0.2.2
 	User root
@@ -106,16 +109,18 @@ Host host
 	IdentityFile ~/.ssh/db_rsa
 	StrictHostKeyChecking no
 EOF
-sudo cp tc_root/home/tc/.ssh/config tc_root/root/.ssh/
+	sudo cp tc_root/home/tc/.ssh/config tc_root/root/.ssh/
+
+fi
 
 ./rebuild_cpio_and_linux.sh $LINUX_ROOT
 
 ######## Copy it somewhere
 # Yes, the initrd name must be the same as the one in rebuild_cpio_and_linux.sh.
 
-echo "Copying to devbox"
-[ ! -n "$SKIP_KERNEL" ] && scp $LINUX_ROOT/vmlinux devbox:
-scp $LINUX_ROOT/akaros/initramfs.cpio.gz devbox:
+#echo "Copying to devbox"
+#[ ! -n "$SKIP_KERNEL" ] && scp $LINUX_ROOT/vmlinux devbox:
+#scp $LINUX_ROOT/akaros/initramfs.cpio.gz devbox:
 
 # Example for building and deploying mount-fs:
 #./embed_payload.sh vm-apps/mount-fs.sh initramfs.cpio.gz obj/mount-fs
